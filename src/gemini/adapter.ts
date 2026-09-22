@@ -1,5 +1,6 @@
 import { selectors } from "./selectors";
 import type { Folder, GeminiChat } from "../domain/types";
+import { setSingleChatDragImage } from "../drag-preview";
 
 export function findChatsContainer(): HTMLElement | null {
     const section = document.querySelector<HTMLElement>(selectors.chatsSection);
@@ -29,9 +30,13 @@ export function readChats(): GeminiChat[] {
 function setDragSource(link: HTMLAnchorElement, chatId: string): void {
     link.draggable = true;
     link.ondragstart = (event) => {
-        event.stopPropagation();
+        event.stopImmediatePropagation();
         event.dataTransfer?.setData("text/plain", chatId);
-        if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
+        if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = "move";
+            setSingleChatDragImage(event, link.getAttribute("aria-label") || link.textContent?.trim() || chatId, link);
+        }
+        window.getSelection()?.removeAllRanges();
     };
 }
 

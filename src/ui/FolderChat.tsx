@@ -1,4 +1,5 @@
 import type { GeminiChat } from "../domain/types";
+import { setSingleChatDragImage } from "../drag-preview";
 
 interface FolderChatProps {
     chatId: string;
@@ -12,9 +13,17 @@ export function FolderChat({ chatId, chat, onUnassign }: FolderChatProps) {
             class="go-folder-chat"
             href={chat?.href ?? chatId}
             draggable={true}
-            onDragStart={(event) => {
-                event.dataTransfer?.setData("text/plain", chatId);
-                if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
+            ref={(link) => {
+                if (!link) return;
+                link.ondragstart = (event) => {
+                    event.stopImmediatePropagation();
+                    event.dataTransfer?.setData("text/plain", chatId);
+                    if (event.dataTransfer) {
+                        event.dataTransfer.effectAllowed = "move";
+                        setSingleChatDragImage(event, chat?.label ?? chatId, link);
+                    }
+                    window.getSelection()?.removeAllRanges();
+                };
             }}
             onContextMenu={(event) => {
                 event.preventDefault();
