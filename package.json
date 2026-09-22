@@ -16,7 +16,7 @@
     "zip:firefox": "extension build --browser firefox --zip"
   },
   "devDependencies": {
-    "extension": "4.1.18",
+    "extension": "4.1.26",
     "typescript": "7.0.2"
   },
   "dependencies": {
