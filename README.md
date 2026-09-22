@@ -55,9 +55,4 @@ The extension was tested on Chrome, Helium, Firefox and Zen browsers, on both ma
 - TypeScript and Preact own the organizer UI.
 - Vanilla DOM APIs own Gemini integration and `MutationObserver` handling.
 - Dexie and IndexedDB own local folder and chat-assignment data.
-- Cloud synchronization is intentionally not implemented yet.
-
-### Roadmap
-- Add cloud synchronization after the local architecture is stable.
-- Prepare the extension for Chrome Web Store release.
 

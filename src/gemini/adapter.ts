@@ -2,6 +2,8 @@ import { selectors } from "./selectors";
 import type { Folder, GeminiChat } from "../domain/types";
 import { setSingleChatDragImage } from "../drag-preview";
 
+let mainListDropHandler: ((chatId: string) => void) | null = null;
+
 export function findChatsContainer(): HTMLElement | null {
     const section = document.querySelector<HTMLElement>(selectors.chatsSection);
     return section?.querySelector<HTMLElement>(selectors.chatsContainer) ?? null;
@@ -93,6 +95,7 @@ export function mountHeaderButton(onCreate: () => void): void {
 }
 
 export function mountMainListDropTarget(onUnassign: (chatId: string) => void): void {
+    mainListDropHandler = onUnassign;
     const container = findChatsContainer();
     if (!container || container.dataset.goMainDropReady === "1") return;
 
@@ -112,7 +115,7 @@ export function mountMainListDropTarget(onUnassign: (chatId: string) => void): v
         if ((event.target as Element).closest(".go-folder")) return;
         event.preventDefault();
         const chatId = event.dataTransfer?.getData("text/plain");
-        if (chatId) onUnassign(chatId);
+        if (chatId) mainListDropHandler?.(chatId);
     });
 }
 

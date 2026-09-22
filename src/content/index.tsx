@@ -1,5 +1,8 @@
 import { render } from "preact";
-import { loadOrganizerData } from "../data/repositories";
+import { createOrganizerRepository } from "../data/repositories";
+import { OrganizerDB } from "../data/db";
+import { getWorkspaceId } from "../gemini/account";
+import type { OrganizerRepository } from "../data/repositories";
 import type { GeminiChat, OrganizerData } from "../domain/types";
 import {
     findChatsContainer,
@@ -13,6 +16,8 @@ import { Organizer } from "../ui/Organizer";
 
 let mounted = false;
 let mounting = false;
+let activeWorkspaceId: string | null = null;
+let repository: OrganizerRepository | null = null;
 let latestData: OrganizerData | null = null;
 let latestChats: GeminiChat[] = [];
 
@@ -27,15 +32,50 @@ function updateData(data: OrganizerData): void {
     refreshGemini();
 }
 
+function unmountOrganizer(): void {
+    const root = document.getElementById("gemini-organizer-root");
+    if (root) {
+        render(null, root);
+        root.remove();
+    }
+
+    repository?.close();
+    repository = null;
+    activeWorkspaceId = null;
+    latestData = null;
+    latestChats = [];
+    mounted = false;
+}
+
 async function mountOrganizer(): Promise<void> {
+    const workspaceId = await getWorkspaceId();
+    if (!workspaceId) {
+        if (mounted) unmountOrganizer();
+        return;
+    }
+
+    if (mounted && activeWorkspaceId !== workspaceId) unmountOrganizer();
+
     const container = findChatsContainer();
     if (!container) return;
-    if (mounted && document.getElementById("gemini-organizer-root")?.isConnected) return;
+    if (mounted && activeWorkspaceId === workspaceId && document.getElementById("gemini-organizer-root")?.isConnected) {
+        return;
+    }
     if (mounting) return;
     mounting = true;
 
     try {
-        const data = await loadOrganizerData();
+        const db = new OrganizerDB(workspaceId);
+        const nextRepository = createOrganizerRepository(db);
+        const data = await nextRepository.loadOrganizerData();
+
+        if (await getWorkspaceId() !== workspaceId) {
+            nextRepository.close();
+            return;
+        }
+
+        repository = nextRepository;
+        activeWorkspaceId = workspaceId;
         latestData = data;
         latestChats = readChats();
 
@@ -45,7 +85,7 @@ async function mountOrganizer(): Promise<void> {
         container.prepend(root);
 
         render(
-            <Organizer initialData={data} chats={latestChats} onDataChange={updateData} />,
+            <Organizer repository={nextRepository} initialData={data} chats={latestChats} onDataChange={updateData} />,
             root,
         );
 

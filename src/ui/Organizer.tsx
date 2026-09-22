@@ -7,17 +7,20 @@ import {
     setFoldersVisible,
     unassignChat,
     updateFolder,
+    type FolderChanges,
 } from "../services/organizer-service";
 import { useMountEffect } from "./use-mount-effect";
 import { FolderTree } from "./FolderTree";
+import type { OrganizerRepository } from "../data/repositories";
 
 interface OrganizerProps {
+    repository: OrganizerRepository;
     initialData: OrganizerData;
     chats: GeminiChat[];
     onDataChange: (data: OrganizerData) => void;
 }
 
-export function Organizer({ initialData, chats, onDataChange }: OrganizerProps) {
+export function Organizer({ repository, initialData, chats, onDataChange }: OrganizerProps) {
     const [data, setData] = useState(initialData);
     const dataRef = useRef(data);
     dataRef.current = data;
@@ -29,7 +32,7 @@ export function Organizer({ initialData, chats, onDataChange }: OrganizerProps) 
         };
         const unassign = (event: Event) => {
             const chatId = (event as CustomEvent<string>).detail;
-            if (chatId) void apply(unassignChat(dataRef.current, chatId));
+            if (chatId) void apply(unassignChat(repository, dataRef.current, chatId));
         };
 
         window.addEventListener("gemini-organizer-create-root-folder", createRootFolder);
@@ -48,7 +51,7 @@ export function Organizer({ initialData, chats, onDataChange }: OrganizerProps) 
 
     async function addFolder(parentId: string | null): Promise<void> {
         const currentData = dataRef.current;
-        const folder = await createFolder(currentData, parentId);
+        const folder = await createFolder(repository, currentData, parentId);
         const next = {
             ...currentData,
             folders: [...currentData.folders, folder],
@@ -57,10 +60,10 @@ export function Organizer({ initialData, chats, onDataChange }: OrganizerProps) 
         onDataChange(next);
     }
 
-    async function changeFolder(folderId: string, changes: Parameters<typeof updateFolder>[1]): Promise<void> {
+    async function changeFolder(folderId: string, changes: FolderChanges): Promise<void> {
         const folder = data.folders.find((item) => item.id === folderId);
         if (!folder) return;
-        const updated = await updateFolder(folder, changes);
+        const updated = await updateFolder(repository, folder, changes);
         const next = {
             ...data,
             folders: data.folders.map((item) => (item.id === folderId ? updated : item)),
@@ -71,7 +74,7 @@ export function Organizer({ initialData, chats, onDataChange }: OrganizerProps) 
 
     async function deleteFolder(folderId: string): Promise<void> {
         if (!confirm("Delete this folder? (Chats will return to the main list)")) return;
-        const next = await removeFolder(data, folderId);
+        const next = await removeFolder(repository, data, folderId);
         setData(next);
         onDataChange(next);
     }
@@ -84,7 +87,7 @@ export function Organizer({ initialData, chats, onDataChange }: OrganizerProps) 
                     type="button"
                     class="go-toolbar-toggle"
                     aria-label={data.settings.foldersVisible ? "Hide folders" : "Show folders"}
-                    onClick={() => apply(setFoldersVisible(data, !data.settings.foldersVisible))}
+                    onClick={() => apply(setFoldersVisible(repository, data, !data.settings.foldersVisible))}
                 >
                     {data.settings.foldersVisible ? "Hide" : "Show"}
                 </button>
@@ -105,8 +108,8 @@ export function Organizer({ initialData, chats, onDataChange }: OrganizerProps) 
                     onAddFolder={addFolder}
                     onUpdateFolder={changeFolder}
                     onDeleteFolder={deleteFolder}
-                    onAssignChat={(chatId, folderId) => apply(assignChat(data, chatId, folderId))}
-                    onUnassignChat={(chatId) => apply(unassignChat(data, chatId))}
+                    onAssignChat={(chatId, folderId) => apply(assignChat(repository, data, chatId, folderId))}
+                    onUnassignChat={(chatId) => apply(unassignChat(repository, data, chatId))}
                 />
             )}
         </div>

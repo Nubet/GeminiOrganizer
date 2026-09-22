@@ -1,12 +1,6 @@
 import { createId } from "../domain/ids";
 import { FOLDER_COLORS, type ChatAssignment, type Folder, type OrganizerData } from "../domain/types";
-import {
-    deleteAssignment,
-    deleteFolder,
-    saveAssignment,
-    saveFolder,
-    saveSettings,
-} from "../data/repositories";
+import type { OrganizerRepository } from "../data/repositories";
 
 export type FolderChanges = Partial<Pick<Folder, "name" | "color" | "isExpanded">>;
 
@@ -16,6 +10,7 @@ function nextColor(folders: Folder[]): string {
 }
 
 export async function createFolder(
+    repository: OrganizerRepository,
     data: OrganizerData,
     parentId: string | null,
 ): Promise<Folder> {
@@ -32,21 +27,26 @@ export async function createFolder(
         updatedAt: now,
     };
 
-    await saveFolder(folder);
+    await repository.saveFolder(folder);
     return folder;
 }
 
 export async function updateFolder(
+    repository: OrganizerRepository,
     folder: Folder,
     changes: FolderChanges,
 ): Promise<Folder> {
     const updated = { ...folder, ...changes, updatedAt: Date.now() };
-    await saveFolder(updated);
+    await repository.saveFolder(updated);
     return updated;
 }
 
-export async function removeFolder(data: OrganizerData, folderId: string): Promise<OrganizerData> {
-    await deleteFolder(folderId);
+export async function removeFolder(
+    repository: OrganizerRepository,
+    data: OrganizerData,
+    folderId: string,
+): Promise<OrganizerData> {
+    await repository.deleteFolder(folderId);
     const ids = new Set([folderId]);
     let changed = true;
 
@@ -68,6 +68,7 @@ export async function removeFolder(data: OrganizerData, folderId: string): Promi
 }
 
 export async function assignChat(
+    repository: OrganizerRepository,
     data: OrganizerData,
     chatId: string,
     folderId: string,
@@ -81,7 +82,7 @@ export async function assignChat(
         updatedAt: now,
     };
 
-    await saveAssignment(assignment);
+    await repository.saveAssignment(assignment);
     return {
         ...data,
         assignments: [
@@ -94,8 +95,12 @@ export async function assignChat(
     };
 }
 
-export async function unassignChat(data: OrganizerData, chatId: string): Promise<OrganizerData> {
-    await deleteAssignment(chatId);
+export async function unassignChat(
+    repository: OrganizerRepository,
+    data: OrganizerData,
+    chatId: string,
+): Promise<OrganizerData> {
+    await repository.deleteAssignment(chatId);
     return {
         ...data,
         assignments: data.assignments.filter((assignment) => assignment.chatId !== chatId),
@@ -103,10 +108,11 @@ export async function unassignChat(data: OrganizerData, chatId: string): Promise
 }
 
 export async function setFoldersVisible(
+    repository: OrganizerRepository,
     data: OrganizerData,
     foldersVisible: boolean,
 ): Promise<OrganizerData> {
     const settings = { id: "main" as const, foldersVisible };
-    await saveSettings(settings);
+    await repository.saveSettings(settings);
     return { ...data, settings };
 }

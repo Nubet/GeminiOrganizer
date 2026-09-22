@@ -9,6 +9,11 @@ export function observeGeminiDom(onChange: () => void): MutationObserver {
         });
     });
 
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["content", "name"],
+        childList: true,
+        subtree: true,
+    });
     return observer;
 }
