@@ -1,9 +1,13 @@
 icon.psd
 icon2.psd
 logo.psd
+dist/
 .output/
 node_modules/
 .DS_Store
 .idea
 Untitled-1.psd
 .DS_Store
+
+# Extension.js local session state
+.extension-js

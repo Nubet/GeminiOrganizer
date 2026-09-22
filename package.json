@@ -7,21 +7,20 @@
     "bun": ">=1.3.0"
   },
   "scripts": {
-    "build:dev": "bun run scripts/build.js dev",
-    "build:prod": "bun run scripts/build.js prod",
-    "build:chrome": "bun run scripts/build.js prod chrome-mv3",
-    "build:firefox": "bun run scripts/build.js prod firefox-mv3",
+    "dev": "extension dev",
+    "build": "extension build",
+    "build:chrome": "extension build --browser chrome",
+    "build:firefox": "extension build --browser firefox",
     "build:all": "bun run build:chrome && bun run build:firefox",
-    "dev": "bun run scripts/watch.js",
-    "dev:chrome": "bun run scripts/watch.js chrome-mv3",
-    "dev:firefox": "bun run scripts/watch.js firefox-mv3",
-    "zip:chrome": "bun run scripts/zip.js chrome-mv3",
-    "zip:firefox": "bun run scripts/zip.js firefox-mv3",
-    "clean": "bun run scripts/clean.js"
+    "zip:chrome": "extension build --browser chrome --zip",
+    "zip:firefox": "extension build --browser firefox --zip"
   },
   "devDependencies": {
-    "archiver": "^7.0.1",
-    "clean-css": "^5.3.3",
-    "terser": "^5.31.0"
+    "extension": "4.1.18",
+    "typescript": "7.0.2"
+  },
+  "dependencies": {
+    "dexie": "^4.0.11",
+    "preact": "^10.26.4"
   }
 }
