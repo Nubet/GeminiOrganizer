@@ -1,188 +1,270 @@
 .gemini-organizer-container {
-  padding: 4px 10px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border-bottom: 1px solid rgba(128, 128, 128, 0.2);
-  margin-bottom: 10px;
-  font-family: "Google Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-  max-height: min(55vh, 460px);
-  overflow: auto;
+    padding: 4px 8px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+    margin-bottom: 10px;
+    font-family: "Google Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    max-height: min(55vh, 460px);
+    overflow: auto;
 }
 
 .gemini-organizer-container.go-main-drop-active {
-  outline: 1px dashed rgba(66, 133, 244, 0.55);
-  outline-offset: 2px;
+    outline: 1px dashed rgba(66, 133, 244, 0.55);
+    outline-offset: 2px;
 }
 
 .go-chats-header-anchor {
-  position: relative;
+    position: relative;
 }
 
 .go-add-folder-icon {
-  background: transparent;
-  color: inherit;
-  border: 1px dashed rgba(128, 128, 128, 0.5);
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: inherit;
-  font-weight: 600;
-  font-size: 14px;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 3;
+    background: transparent;
+    color: inherit;
+    border: 1px dashed rgba(128, 128, 128, 0.5);
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
 }
 
 .go-add-folder-icon:hover {
-  background: rgba(128, 128, 128, 0.1);
+    background: rgba(128, 128, 128, 0.1);
 }
 
 .go-folder {
-  border: 1px solid rgba(128, 128, 128, 0.2);
-  border-radius: 8px;
-  overflow: hidden;
-  background: rgba(0, 0, 0, 0.1);
-  color: inherit;
+    border: 0;
+    border-radius: 2px;
+    overflow: hidden;
+    color: inherit;
 }
 
 .go-folder.drag-over {
-  border: 2px dashed #4285F4;
-  background: rgba(66, 133, 244, 0.1);
+    outline: 2px dashed rgba(128, 128, 128, 0.6);
+    outline-offset: -2px;
 }
 
 .go-folder-header {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  cursor: pointer;
-  background: rgba(128, 128, 128, 0.05);
-  transition: background 0.2s;
-  gap: 8px;
+    display: flex;
+    align-items: center;
+    padding: 5px 8px;
+    cursor: pointer;
+    background: transparent;
+    transition: background 0.2s;
+    gap: 8px;
 }
 
 .go-folder-header:hover {
-  background: rgba(128, 128, 128, 0.1);
+    background: rgba(128, 128, 128, 0.08);
 }
 
 .go-folder-chevron {
-  font-size: 10px;
-  margin-right: 8px;
-  transition: transform 0.2s ease;
-  opacity: 0.7;
+    font-size: 10px;
+    margin-right: 8px;
+    transition: transform 0.2s ease;
+    opacity: 0.7;
 }
 
 .go-folder.expanded .go-folder-chevron {
-  transform: rotate(90deg);
+    transform: rotate(90deg);
 }
 
 .go-folder-color {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
-  border: none;
-  padding: 0;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    border: none;
+    padding: 0;
 }
 
 .go-folder-color-wrap {
-  position: relative;
-  width: 12px;
-  height: 12px;
-  flex-shrink: 0;
+    position: relative;
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
 }
 
 .go-folder-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 0;
-  margin: 0;
-  cursor: pointer;
-  display: block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    display: block;
 }
 
 .go-folder-name {
-  flex-grow: 1;
-  background: transparent;
-  border: none;
-  color: inherit;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  outline: none;
-  min-width: 0;
+    flex-grow: 1;
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    outline: none;
+    min-width: 0;
 }
 
 .go-folder-delete {
-  background: transparent;
-  border: none;
-  color: inherit;
-  cursor: pointer;
-  font-size: 16px;
-  opacity: 0.3;
-  transition: opacity 0.2s, color 0.2s;
+    background: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    font-size: 16px;
+    line-height: 1;
+    box-sizing: border-box;
+    opacity: 0.3;
+    transition: opacity 0.2s, color 0.2s;
 }
 
 .go-folder-delete:hover {
-  opacity: 1;
-  color: #ff5252;
+    opacity: 1;
+    color: #ff5252;
 }
 
 .go-folder-add-sub {
-  background: transparent;
-  border: 1px solid rgba(128, 128, 128, 0.35);
-  color: inherit;
-  cursor: pointer;
-  font-size: 13px;
-  width: 18px;
-  height: 18px;
-  line-height: 1;
-  border-radius: 5px;
-  opacity: 0.7;
-  margin-right: 6px;
+    background: transparent;
+    border: 1px solid rgba(128, 128, 128, 0.35);
+    color: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    line-height: 1;
+    box-sizing: border-box;
+    border-radius: 5px;
+    opacity: 0.7;
+    margin-right: 6px;
 }
 
 .go-folder-add-sub:hover {
-  opacity: 1;
-  background: rgba(128, 128, 128, 0.12);
+    opacity: 1;
+    background: rgba(128, 128, 128, 0.12);
 }
 
 .go-folder-content {
-  min-height: 10px;
-  display: none;
-  flex-direction: column;
-  padding-bottom: 5px;
+    min-height: 4px;
+    display: none;
+    flex-direction: column;
+    padding: 0 0 4px;
 }
 
 .go-folder.expanded > .go-folder-content {
-  display: flex;
+    display: flex;
 }
 
 .go-subfolders {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 6px;
 }
 
 .go-subfolders > .go-folder {
-  margin-left: 12px;
+    margin-left: 12px;
 }
 
 .go-folder-content a {
-  margin-left: 15px !important; 
-  border-left: 2px solid rgba(128, 128, 128, 0.2);
-  border-radius: 0 !important;
+    margin-left: 10px !important;
+    border-left: 0 !important;
+    border-radius: 0 !important;
+}
+
+.go-folder-chat {
+    opacity: 0.82;
+}
+
+.go-folder-marker {
+    display: inline-flex;
+    width: 7px;
+    height: 7px;
+    min-width: 7px;
+    min-height: 7px;
+    flex: 0 0 7px;
+    align-self: center;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    margin-left: 8px;
+    border-radius: 50%;
+    vertical-align: middle;
+    opacity: 0.9;
+    overflow: visible;
+}
+
+.go-toolbar {
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px;
+    color: inherit;
+}
+
+.go-toolbar-title {
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.72;
+}
+
+.go-toolbar-toggle {
+    border: 0;
+    border-radius: 5px;
+    padding: 3px 7px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    font-size: 11px;
+    opacity: 0.62;
+}
+
+.go-toolbar-toggle:hover {
+    background: rgba(128, 128, 128, 0.12);
+    opacity: 1;
+}
+
+.go-empty-state {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 7px 8px 9px 12px;
+    border-left: 3px solid rgba(128, 128, 128, 0.4);
+    color: inherit;
+    font-size: 12px;
+    opacity: 0.68;
+}
+
+.go-empty-state strong {
+    font-weight: 600;
+    opacity: 0.9;
 }

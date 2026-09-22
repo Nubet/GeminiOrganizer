@@ -1,5 +1,11 @@
+const FOLDER_COLORS = [
+    '#EA4335', '#FB8C00', '#F9AB00', '#34A853', '#00ACC1',
+    '#4285F4', '#9334E6', '#E91E63', '#5F6368'
+];
+
 let appState = {
-    folders: []
+    folders: [],
+    foldersVisible: true
 };
 
 let domSyncScheduled = false;
@@ -8,7 +14,8 @@ function createFolderObject(name = 'New Folder') {
     return {
         id: 'folder_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
         name,
-        color: '#4285F4',
+        color: getNextFolderColor(),
+        icon: 'folder',
         isExpanded: true,
         chats: [],
         subfolders: []
@@ -20,6 +27,7 @@ function normalizeFolder(folder) {
         id: folder?.id || 'folder_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
         name: folder?.name || 'New Folder',
         color: folder?.color || '#4285F4',
+        icon: folder?.icon || 'folder',
         isExpanded: folder?.isExpanded !== false,
         chats: Array.isArray(folder?.chats) ? folder.chats : [],
         subfolders: Array.isArray(folder?.subfolders)
@@ -77,21 +85,29 @@ function removeFolderById(folderId, folders = appState.folders) {
 async function init() {
     try {
         if (chrome?.storage?.sync) {
-            const syncData = await chrome.storage.sync.get(['geminiFolders']);
+            const syncData = await chrome.storage.sync.get(['geminiFolders', 'geminiFoldersVisible']);
+            appState.foldersVisible = syncData.geminiFoldersVisible !== false;
             if (syncData.geminiFolders) {
                 appState.folders = syncData.geminiFolders;
             } else if (chrome?.storage?.local) {
-                const localData = await chrome.storage.local.get(['geminiFolders']);
+                const localData = await chrome.storage.local.get(['geminiFolders', 'geminiFoldersVisible']);
                 if (localData.geminiFolders) {
                     appState.folders = localData.geminiFolders;
-                    chrome.storage.sync.set({ geminiFolders: appState.folders }).catch(() => {});
+                    chrome.storage.sync.set({
+                        geminiFolders: appState.folders,
+                        geminiFoldersVisible: localData.geminiFoldersVisible !== false
+                    }).catch(() => {});
                 }
+                appState.foldersVisible = localData.geminiFoldersVisible !== false;
+            } else {
+                appState.foldersVisible = syncData.geminiFoldersVisible !== false;
             }
         } else if (chrome?.storage?.local) {
-            const localData = await chrome.storage.local.get(['geminiFolders']);
+            const localData = await chrome.storage.local.get(['geminiFolders', 'geminiFoldersVisible']);
             if (localData && localData.geminiFolders) {
                 appState.folders = localData.geminiFolders;
             }
+            appState.foldersVisible = localData.geminiFoldersVisible !== false;
         }
     } catch (error) {
         console.warn("Storage error. Starting fresh.");
@@ -102,10 +118,16 @@ async function init() {
 
 function saveState() {
     if (chrome?.storage?.local) {
-        chrome.storage.local.set({ geminiFolders: appState.folders }).catch(() => {});
+        chrome.storage.local.set({
+            geminiFolders: appState.folders,
+            geminiFoldersVisible: appState.foldersVisible
+        }).catch(() => {});
     }
     if (chrome?.storage?.sync) {
-        chrome.storage.sync.set({ geminiFolders: appState.folders }).catch(() => {});
+        chrome.storage.sync.set({
+            geminiFolders: appState.folders,
+            geminiFoldersVisible: appState.foldersVisible
+        }).catch(() => {});
     }
 }
 
@@ -139,6 +161,17 @@ function observeDOM() {
 
     observer.observe(document.body, { childList: true, subtree: true });
     syncSidebarUI();
+}
+
+function getAllFolderColors(folders = appState.folders) {
+    return folders.flatMap(folder => [folder.color, ...getAllFolderColors(folder.subfolders)]);
+}
+
+function getNextFolderColor() {
+    const usedColors = new Set(getAllFolderColors());
+    const availableColors = FOLDER_COLORS.filter(color => !usedColors.has(color));
+    const colors = availableColors.length > 0 ? availableColors : FOLDER_COLORS;
+    return colors[Math.floor(Math.random() * colors.length)];
 }
 
 function findChatsListContainer() {
@@ -266,21 +299,56 @@ function renderFolders() {
     if (!root) return;
 
     const sidebarContainer = root.parentNode;
-    const existingFolders = root.querySelectorAll('.go-folder');
-    existingFolders.forEach(f => {
-        const chatsInside = f.querySelectorAll('a[href^="/app/"]');
-        chatsInside.forEach(chat => {
+    root.querySelectorAll('.go-folder a[href^="/app/"]').forEach(chat => {
+        if (!chat.dataset.goFolderReference) {
             sidebarContainer.appendChild(chat);
-        });
-        f.remove();
+        }
     });
+    root.replaceChildren();
 
-    renderFolderTree(appState.folders, root, 0);
+    const toolbar = document.createElement('div');
+    toolbar.className = 'go-toolbar';
+
+    const title = document.createElement('span');
+    title.className = 'go-toolbar-title';
+    title.textContent = 'Folders';
+
+    const visibilityButton = document.createElement('button');
+    visibilityButton.type = 'button';
+    visibilityButton.className = 'go-toolbar-toggle';
+    visibilityButton.textContent = appState.foldersVisible ? 'Hide' : 'Show';
+    visibilityButton.setAttribute(
+        'aria-label',
+        appState.foldersVisible ? 'Hide folders' : 'Show folders'
+    );
+    visibilityButton.onclick = () => {
+        appState.foldersVisible = !appState.foldersVisible;
+        saveState();
+        renderFolders();
+    };
+
+    toolbar.appendChild(title);
+    toolbar.appendChild(visibilityButton);
+    root.appendChild(toolbar);
+
+    if (!appState.foldersVisible) {
+        return;
+    }
+
+    if (appState.folders.length === 0) {
+        const emptyState = document.createElement('div');
+        emptyState.className = 'go-empty-state';
+        emptyState.innerHTML = '<strong>No folders yet</strong><span>Create a folder to get started</span>';
+        root.appendChild(emptyState);
+        return;
+    }
+
+    renderFolderTree(appState.folders, root);
 
     organizeChats();
 }
 
-function renderFolderTree(folders, parentElement, depth) {
+function renderFolderTree(folders, parentElement) {
     folders.forEach(folderData => {
         const folderEl = document.createElement('div');
         folderEl.className = `go-folder ${folderData.isExpanded ? 'expanded' : ''}`;
@@ -370,6 +438,23 @@ function renderFolderTree(folders, parentElement, depth) {
         const content = document.createElement('div');
         content.className = 'go-folder-content';
 
+        folderData.chats.forEach(chatHref => {
+            const chatLink = document.querySelector(
+                `a[href="${CSS.escape(chatHref)}"]`
+            );
+            if (!chatLink) return;
+
+            const reference = chatLink.cloneNode(true);
+            reference.dataset.goFolderReference = '1';
+            reference.classList.add('go-folder-chat');
+            reference.querySelector('.go-folder-marker')?.remove();
+            reference.draggable = true;
+            reference.ondragstart = (e) => {
+                startChatDrag(e, chatHref, reference);
+            };
+            content.appendChild(reference);
+        });
+
         const subfolders = document.createElement('div');
         subfolders.className = 'go-subfolders';
 
@@ -381,9 +466,38 @@ function renderFolderTree(folders, parentElement, depth) {
         parentElement.appendChild(folderEl);
 
         if (folderData.subfolders.length > 0) {
-            renderFolderTree(folderData.subfolders, subfolders, depth + 1);
+            renderFolderTree(folderData.subfolders, subfolders);
         }
     });
+}
+
+function startChatDrag(event, chatHref, source) {
+    event.stopPropagation();
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', chatHref);
+
+    const preview = document.createElement('div');
+    preview.textContent = source.getAttribute('aria-label') || source.textContent.trim();
+    preview.style.cssText = [
+        'position: fixed',
+        'top: -1000px',
+        'left: -1000px',
+        'width: 260px',
+        'padding: 8px 12px',
+        'overflow: hidden',
+        'border: 1px solid rgba(128, 128, 128, 0.35)',
+        'border-radius: 8px',
+        'background: #ffffff',
+        'color: #202124',
+        'font: 14px "Google Sans", "Segoe UI", sans-serif',
+        'white-space: nowrap',
+        'text-overflow: ellipsis',
+        'pointer-events: none'
+    ].join(';');
+
+    document.body.appendChild(preview);
+    event.dataTransfer.setDragImage(preview, 12, 12);
+    requestAnimationFrame(() => preview.remove());
 }
 
 function setupDragAndDrop(folderEl, folderData, content) {
@@ -424,23 +538,36 @@ function organizeChats() {
     const root = document.getElementById('gemini-organizer-root');
     if (!root) return;
 
-    const chatLinks = root.parentElement?.querySelectorAll('a[href^="/app/"]') || [];
+    const chatLinks = findChatsListContainer()?.querySelectorAll(
+        'mat-nav-list > gem-nav-list-item[data-test-id="conversation"] > a[href^="/app/"]'
+    ) || [];
 
     chatLinks.forEach(link => {
         const href = link.getAttribute('href');
 
         link.draggable = true;
         link.ondragstart = (e) => {
-            e.dataTransfer.setData('text/plain', href);
+            startChatDrag(e, href, link);
         };
 
         const targetFolder = findFolderContainingChat(href);
 
-        if (targetFolder) {
-            const folderContentArea = document.querySelector(`.go-folder[data-id="${targetFolder.id}"] .go-folder-content`);
-            if (folderContentArea && link.parentElement !== folderContentArea) {
-                folderContentArea.appendChild(link);
-            }
+        const marker = link.querySelector('.go-folder-marker');
+        if (!targetFolder) {
+            link.classList.remove('go-chat-in-folder');
+            marker?.remove();
+            return;
+        }
+
+        link.classList.add('go-chat-in-folder');
+        const folderMarker = marker || document.createElement('span');
+        folderMarker.className = 'go-folder-marker';
+        folderMarker.textContent = '';
+        folderMarker.title = `In folder: ${targetFolder.name}`;
+        folderMarker.setAttribute('aria-label', `In folder: ${targetFolder.name}`);
+        folderMarker.style.backgroundColor = targetFolder.color;
+        if (!marker) {
+            link.appendChild(folderMarker);
         }
     });
 }
