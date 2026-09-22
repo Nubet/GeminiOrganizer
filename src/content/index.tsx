@@ -18,13 +18,29 @@ let mounted = false;
 let mounting = false;
 let activeWorkspaceId: string | null = null;
 let repository: OrganizerRepository | null = null;
+let organizerRoot: HTMLElement | null = null;
 let latestData: OrganizerData | null = null;
 let latestChats: GeminiChat[] = [];
+
+function renderOrganizer(): void {
+    if (!organizerRoot || !repository || !latestData) return;
+
+    render(
+        <Organizer
+            repository={repository}
+            initialData={latestData}
+            chats={latestChats}
+            onDataChange={updateData}
+        />,
+        organizerRoot,
+    );
+}
 
 function refreshGemini(): void {
     if (!latestData) return;
     latestChats = readChats();
     syncGeminiDom(latestData.folders, latestData.assignments);
+    renderOrganizer();
 }
 
 function updateData(data: OrganizerData): void {
@@ -39,6 +55,7 @@ function unmountOrganizer(): void {
         root.remove();
     }
 
+    organizerRoot = null;
     repository?.close();
     repository = null;
     activeWorkspaceId = null;
@@ -79,15 +96,12 @@ async function mountOrganizer(): Promise<void> {
         latestData = data;
         latestChats = readChats();
 
-        const root = document.createElement("div");
-        root.id = "gemini-organizer-root";
-        root.className = "gemini-organizer-mount";
-        container.prepend(root);
+        organizerRoot = document.createElement("div");
+        organizerRoot.id = "gemini-organizer-root";
+        organizerRoot.className = "gemini-organizer-mount";
+        container.prepend(organizerRoot);
 
-        render(
-            <Organizer repository={nextRepository} initialData={data} chats={latestChats} onDataChange={updateData} />,
-            root,
-        );
+        renderOrganizer();
 
         mountHeaderButton(() => {
             window.dispatchEvent(new CustomEvent("gemini-organizer-create-root-folder"));

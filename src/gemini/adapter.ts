@@ -23,7 +23,7 @@ export function readChats(): GeminiChat[] {
             return {
                 id: href,
                 href,
-                label: link.getAttribute("aria-label") || link.textContent?.trim() || href,
+                label: link.textContent?.trim() || link.getAttribute("aria-label") || href,
             } satisfies GeminiChat;
         })
         .filter((chat): chat is GeminiChat => chat !== null);
@@ -36,7 +36,7 @@ function setDragSource(link: HTMLAnchorElement, chatId: string): void {
         event.dataTransfer?.setData("text/plain", chatId);
         if (event.dataTransfer) {
             event.dataTransfer.effectAllowed = "move";
-            setSingleChatDragImage(event, link.getAttribute("aria-label") || link.textContent?.trim() || chatId, link);
+            setSingleChatDragImage(event, link.textContent?.trim() || link.getAttribute("aria-label") || chatId, link);
         }
         window.getSelection()?.removeAllRanges();
     };
